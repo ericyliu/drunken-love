@@ -36,6 +36,8 @@ public class AppNetworkManager : NetworkManager {
   
   void startDiscovery () {
     Debug.Log("Starting discovery");
+    findingServer = true;
+    serverFound = false;
     discovery.Initialize();
     discovery.StartAsClient();
     System.Timers.Timer timer = new System.Timers.Timer(5000);
@@ -85,15 +87,33 @@ public class AppNetworkManager : NetworkManager {
   {
     base.OnServerReady(conn);
     Debug.Log("New player has connected and is ready.");
-    Player player = new Player("Player " + conn.connectionId, conn);
+    string name;
+    if (conn.connectionId == -1) name = application.Username;
+    else name = "Player " + conn.connectionId;
+    Player player = new Player(name, conn);
     application.UpdatePlayer(player, "connect");
+  }
+  
+  public override void OnServerDisconnect (NetworkConnection conn)
+  {
+    base.OnServerDisconnect(conn);
+    Debug.Log("A player has disconnected.");
+    Player player = new Player("", conn);
+    application.UpdatePlayer(player, "disconnect");
   }
   
   // CLIENT METHODS
   
   public override void OnClientConnect (NetworkConnection conn) {
     base.OnClientConnect(conn);
-    Debug.Log("Connected to Server");
+    Debug.Log("Connected to server");
+  }
+  
+  public override void OnClientDisconnect (NetworkConnection conn) {
+    base.OnClientDisconnect(conn);
+    Debug.Log("Disconnected from server");
+    GameObject.Find("StatusText").GetComponent<UnityEngine.UI.Text>().text = "Finding Server...";
+    startDiscovery();
   }
 
 }
